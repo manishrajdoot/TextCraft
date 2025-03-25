@@ -1,5 +1,7 @@
 # TextCraft
  **TextCraft** is a dynamic web-based text styling tool built with HTML, CSS, and JavaScript. It allows users to customize text with a variety of Google Fonts, colors, and downloadable image formats, all wrapped in an interactive and visually appealing interface.
+ ![image](https://github.com/user-attachments/assets/7ac06f74-bd6f-446c-bdc7-190bde73bbe9)
+
 
 **Features**
 **Real-Time Text Preview:** Type and see your text update instantly with selected fonts and colors.
