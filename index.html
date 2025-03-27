@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextCraft</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Custom SVG Icon -->
+    <title>TextCraft - Create & Download Custom Text</title>
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2374ebd5;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%23acb6e5;stop-opacity:1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='50' fill='url(%23grad)'/%3E%3Ctext x='50' y='65' font-family='Poppins, sans-serif' font-size='40' font-weight='700' fill='%23003087' text-anchor='middle' style='text-shadow: 0 0 10px rgba(116, 235, 213, 0.8)'%3ETC%3C/text%3E%3Cpath d='M70 70 L80 80 L75 85 L65 75' fill='none' stroke='%23003087' stroke-width='3'/%3E%3C/svg%3E">
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="css1.css">
+    <link rel="stylesheet" href="css2.css">
+    <!-- jsPDF Library for PDF Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Google Fonts API Key -->
     <script src="config.js"></script>
 </head>
 <body>
@@ -18,7 +23,7 @@
     </div>
     <div class="container">
         <main>
-            <textarea id="inputText" placeholder="Apna text yahan likhein..."></textarea>
+            <textarea id="inputText" placeholder="Apna text yahan likhein..." rows="3"></textarea>
             <div id="fontList" class="font-list"></div>
             <button id="seeAllFonts">See All Fonts</button>
             <div class="color-picker-container">
@@ -35,25 +40,56 @@
                     <select id="formatSelector">
                         <option value="png">PNG</option>
                         <option value="jpeg">JPEG</option>
-                        <option value="jpg">JPG</option>
+                        <option value="bmp">BMP</option>
                         <option value="ico">ICO</option>
-                        <option value="bmp">BMP (Pixel)</option>
+                        <option value="pdf">PDF</option>
                     </select>
                 </div>
-                <button id="downloadButton">Download as Image</button>
+                <button id="downloadButton">Download</button>
             </div>
         </main>
-        <footer>
-            <div class="social-media">
-                <a href="https://x.com/manish_rajdoot" target="_blank">Twitter</a> |
-                <a href="https://www.instagram.com/manish.rajdoot/" target="_blank">Instagram</a> |
-                <a href="https://www.facebook.com/mmh.mrdclub/" target="_blank">Facebook</a>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-section">
+                <h3>Browser Support</h3>
+                <div class="browser-icons">
+                    <img src="https://img.icons8.com/color/48/000000/chrome.png" alt="Chrome" title="Google Chrome">
+                    <img src="https://img.icons8.com/color/48/000000/firefox.png" alt="Firefox" title="Mozilla Firefox">
+                    <img src="https://img.icons8.com/color/48/000000/internet-explorer.png" alt="IE" title="Internet Explorer">
+                    <img src="https://img.icons8.com/color/48/000000/opera.png" alt="Opera" title="Opera">
+                    <img src="https://img.icons8.com/color/48/000000/safari.png" alt="Safari" title="Safari">
+                    <img src="https://img.icons8.com/color/48/000000/duckduckgo.png" alt="DuckDuckGo" title="DuckDuckGo">
+                </div>
             </div>
-            <p>© 2025 TextCraft. All rights reserved.</p>
+            <div class="footer-section spark-section">
+                <h3>Connect With Us</h3>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/mmh.mrdclub/" target="_blank"><img src="https://img.icons8.com/color/48/000000/facebook.png" alt="Facebook"></a>
+                    <a href="https://x.com/manish_rajdoot" target="_blank"><img src="https://img.icons8.com/color/48/000000/twitter.png" alt="Twitter"></a>
+                    <a href="https://www.instagram.com/manish.rajdoot/" target="_blank"><img src="https://img.icons8.com/color/48/000000/instagram-new.png" alt="Instagram"></a>
+                    <a href="https://in.linkedin.com/in/manishrajdoot1" target="_blank"><img src="https://img.icons8.com/color/48/000000/linkedin.png" alt="LinkedIn"></a>
+                    <a href="#" id="emailLink"><img src="https://img.icons8.com/color/48/000000/email.png" alt="Email"></a>
+                    <a href="tel:+919602631791" id="mobileLink"><img src="https://img.icons8.com/color/48/000000/phone.png" alt="Mobile"></a>
+                </div>
+            </div>
+            <div class="footer-section spark-section about-section">
+                <h3>About TextCraft</h3>
+                <p>TextCraft is a creative platform to design and download custom text in various fonts and styles. Whether you're creating social media posts, banners, or personal projects, we provide high-quality text rendering with support for 4K resolution. Explore, create, and download with ease!</p>
+            </div>
+            <div class="footer-bottom spark-section">
+                <p>© <span id="copyrightYear"></span> TextCraft. All Rights Reserved.</p>
+                <p>Site Visits: <span id="visitCounter">0</span></p>
+            </div>
         </footer>
     </div>
     <div class="rain"></div>
     <div class="floating-elements"></div>
-    <script src="script.js"></script>
+
+    <!-- Link to JavaScript Files -->
+    <script src="js1.js"></script>
+    <script src="js2.js"></script>
+    <script src="js3.js"></script>
+    <script src="js4.js"></script>
+    <script src="js5.js"></script>
 </body>
 </html>
