@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let showingAllFonts = false;
     let selectedUnicodeStyle = 'bold';
 
-    // Unicode styles (expanded set like LingoJam)
+    // Unicode styles for fancy text copying
     const unicodeStyles = {
         'bold': {
             'A': '𝐀', 'B': '𝐁', 'C': '𝐂', 'D': '𝐃', 'E': '𝐄', 'F': '𝐅', 'G': '𝐆', 'H': '𝐇', 'I': '𝐈', 'J': '𝐉',
@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
             'k': 'ⓚ', 'l': 'ⓛ', 'm': 'ⓜ', 'n': 'ⓝ', 'o': 'ⓞ', 'p': 'ⓟ', 'q': 'ⓠ', 'r': 'ⓡ', 's': 'ⓢ', 't': 'ⓣ',
             'u': 'ⓤ', 'v': 'ⓥ', 'w': 'ⓦ', 'x': 'ⓧ', 'y': 'ⓨ', 'z': 'ⓩ'
         }
-        // Add more styles as needed
     };
 
     const commonPunctuation = { ' ': ' ', '!': '!', '?': '?', '.': '.', ',': ',', '-': '-', '_': '_' };
@@ -108,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return text.split('').map(char => styleMap[char] || char).join('');
     }
 
-    // Load Google Fonts for preview
     async function loadGoogleFonts() {
         try {
             const apiKey = window.GOOGLE_FONTS_API_KEY;
@@ -173,6 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = colorPicker.value;
         preview.style.fontFamily = activeFont;
         preview.style.color = color;
+        preview.style.fontSize = '60px'; // Larger font for 4K quality on website
+        preview.style.lineHeight = '1.2'; // Better line spacing
+        preview.style.transform = 'scale(1)'; // Ensure no scaling issues
         preview.textContent = text;
     }
 
@@ -234,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     inputText.addEventListener('input', updatePreview);
     colorPicker.addEventListener('input', updatePreview);
 
-    // Copy button with Unicode transformation
     copyButton.addEventListener('click', async () => {
         const textToCopy = preview.textContent;
         const fancyText = toUnicodeStyle(textToCopy, selectedUnicodeStyle);
@@ -249,64 +249,194 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function getDeviceScaleFactor() {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const screenWidth = window.screen.width * devicePixelRatio;
-        const screenHeight = window.screen.height * devicePixelRatio;
-
-        if (screenWidth >= 2560 && screenHeight >= 1440) return 4;
-        else if (screenWidth >= 1920 && screenHeight >= 1080) return 3;
-        else if (screenWidth >= 1280 && screenHeight >= 720) return 2;
-        else return 1;
-    }
-
+    // Improved download button for high-quality images
     downloadButton.addEventListener('click', () => {
         try {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const format = formatSelector.value;
-            const scaleFactor = getDeviceScaleFactor();
+            const text = preview.textContent || 'Yahan aapka text dikhega';
 
-            canvas.width = 400 * scaleFactor;
-            canvas.height = 100 * scaleFactor;
-            ctx.scale(scaleFactor, scaleFactor);
+            // Font settings
+            const fontSize = 300; // Larger font for 4K quality
+            ctx.font = `${fontSize}px "${activeFont}"`;
 
+            // 4K base resolution
+            const baseWidth = 3840; // 4K width
+            const padding = 200; // Padding on all sides
+            const maxTextWidth = baseWidth - padding * 2; // Max width for text
+            const lineHeight = fontSize * 1.2; // Line spacing (1.2x font size)
+
+            // Split text into lines for wrapping
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = words[0] || '';
+
+            for (let i = 1; i < words.length; i++) {
+                const testLine = currentLine + ' ' + words[i];
+                const testWidth = ctx.measureText(testLine).width;
+                if (testWidth <= maxTextWidth) {
+                    currentLine = testLine;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine); // Add the last line
+
+            // Determine alignment and height
+            let textAlign = 'center';
+            let startY = padding;
+            let requiredHeight;
+
+            if (lines.length === 1) {
+                // Center short text vertically and horizontally
+                requiredHeight = fontSize * 1.5 + padding * 2; // Minimal height for single line
+                startY = requiredHeight / 2 - fontSize / 2; // Center vertically
+            } else {
+                // Left-align long text (A4 style)
+                textAlign = 'left';
+                const textHeight = lines.length * lineHeight;
+                requiredHeight = textHeight + padding * 2; // Height based on text
+            }
+
+            const qualityMultiplier = Math.min(Math.max(window.devicePixelRatio || 2, 2), 3); // 2x or 3x scaling
+            canvas.width = baseWidth * qualityMultiplier;
+            canvas.height = requiredHeight * qualityMultiplier;
+
+            console.log(`Canvas size: ${canvas.width}x${canvas.height} pixels (Lines: ${lines.length})`);
+
+            // Scale the context
+            ctx.scale(qualityMultiplier, qualityMultiplier);
+
+            // Maximize rendering quality
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
 
+            // Background
             if (format === 'png' || format === 'ico') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.clearRect(0, 0, baseWidth, requiredHeight);
             } else {
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width / scaleFactor, canvas.height / scaleFactor);
+                ctx.fillRect(0, 0, baseWidth, requiredHeight);
             }
 
-            ctx.font = `24px "${activeFont}"`;
+            // Text rendering
+            ctx.font = `${fontSize}px "${activeFont}"`; // Reapply font after scaling
             ctx.fillStyle = colorPicker.value;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.textAlign = textAlign;
+            ctx.textBaseline = 'top';
 
-            ctx.fillText(preview.textContent, (canvas.width / scaleFactor) / 2, (canvas.height / scaleFactor) / 2);
-
-            const link = document.createElement('a');
-            let mimeType;
-            let extension;
-
-            switch (format) {
-                case 'png': mimeType = 'image/png'; extension = 'png'; break;
-                case 'jpeg':
-                case 'jpg': mimeType = 'image/jpeg'; extension = 'jpg'; break;
-                case 'bmp': mimeType = 'image/bmp'; extension = 'bmp'; break;
-                case 'ico': mimeType = 'image/x-icon'; extension = 'ico'; break;
-                default: mimeType = 'image/png'; extension = 'png';
+            // Draw each line
+            if (lines.length === 1) {
+                // Center short text
+                ctx.fillText(lines[0], baseWidth / 2, startY);
+            } else {
+                // Left-align long text
+                lines.forEach((line, index) => {
+                    ctx.fillText(line, padding, startY + index * lineHeight);
+                });
             }
 
+            // Generate data URL
+            const mimeTypeMap = {
+                'png': 'image/png',
+                'jpeg': 'image/jpeg',
+                'jpg': 'image/jpeg',
+                'bmp': 'image/bmp',
+                'ico': 'image/x-icon'
+            };
+            const mimeType = mimeTypeMap[format] || 'image/png';
+            const extension = format === 'jpeg' ? 'jpg' : format;
+            const quality = (format === 'jpg' || format === 'jpeg') ? 1.0 : undefined;
+
+            const dataUrl = canvas.toDataURL(mimeType, quality);
+            console.log(`Data URL length: ${dataUrl.length} characters`);
+
+            if (dataUrl.length <= 22) {
+                throw new Error('Canvas data is empty. Resolution might be too high for your device.');
+            }
+
+            // Estimate file size (for debugging)
+            const fileSizeMB = (dataUrl.length * 0.75) / (1024 * 1024);
+            console.log(`Estimated file size: ${fileSizeMB.toFixed(2)} MB`);
+
+            // Download directly
+            const link = document.createElement('a');
             link.download = `textcraft.${extension}`;
-            link.href = canvas.toDataURL(mimeType, 1.0);
+            link.href = dataUrl;
             link.click();
         } catch (err) {
-            console.error('Download failed:', err);
-            alert('Failed to download image. Please try again.');
+            console.error('Download error:', err);
+
+            // Fallback to smaller size
+            try {
+                console.log('Attempting fallback with smaller resolution...');
+                const fallbackWidth = 1920; // Full HD width
+                const fallbackFontSize = 150;
+                const fallbackLineHeight = fallbackFontSize * 1.2;
+                const fallbackMaxTextWidth = fallbackWidth - padding * 2;
+
+                // Recompute lines for fallback
+                let fallbackLines = [];
+                let fallbackCurrentLine = words[0] || '';
+                for (let i = 1; i < words.length; i++) {
+                    const testLine = fallbackCurrentLine + ' ' + words[i];
+                    const testWidth = ctx.measureText(testLine).width;
+                    if (testWidth <= fallbackMaxTextWidth) {
+                        fallbackCurrentLine = testLine;
+                    } else {
+                        fallbackLines.push(fallbackCurrentLine);
+                        fallbackCurrentLine = words[i];
+                    }
+                }
+                fallbackLines.push(fallbackCurrentLine);
+
+                let fallbackHeight;
+                let fallbackStartY = padding / 2;
+                if (fallbackLines.length === 1) {
+                    fallbackHeight = fallbackFontSize * 1.5 + padding;
+                    fallbackStartY = fallbackHeight / 2 - fallbackFontSize / 2;
+                } else {
+                    const fallbackTextHeight = fallbackLines.length * fallbackLineHeight;
+                    fallbackHeight = fallbackTextHeight + padding;
+                }
+
+                canvas.width = fallbackWidth * 2;
+                canvas.height = fallbackHeight * 2;
+                ctx.scale(2, 2);
+
+                if (format === 'png' || format === 'ico') {
+                    ctx.clearRect(0, 0, fallbackWidth, fallbackHeight);
+                } else {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, fallbackWidth, fallbackHeight);
+                }
+
+                ctx.font = `${fallbackFontSize}px "${activeFont}"`;
+                ctx.fillStyle = colorPicker.value;
+                ctx.textAlign = fallbackLines.length === 1 ? 'center' : 'left';
+                ctx.textBaseline = 'top';
+
+                if (fallbackLines.length === 1) {
+                    ctx.fillText(fallbackLines[0], fallbackWidth / 2, fallbackStartY);
+                } else {
+                    fallbackLines.forEach((line, index) => {
+                        ctx.fillText(line, padding / 2, (padding / 2) + index * fallbackLineHeight);
+                    });
+                }
+
+                const fallbackDataUrl = canvas.toDataURL(mimeType, quality);
+                const fallbackSizeMB = (fallbackDataUrl.length * 0.75) / (1024 * 1024);
+                console.log(`Fallback size: ${fallbackSizeMB.toFixed(2)} MB`);
+
+                const link = document.createElement('a');
+                link.download = `textcraft_fallback.${extension}`;
+                link.href = fallbackDataUrl;
+                link.click();
+            } catch (fallbackErr) {
+                console.error('Fallback failed:', fallbackErr);
+            }
         }
     });
 
@@ -404,6 +534,13 @@ styleSheet.textContent = `
     }
     .draggable:active {
         cursor: grabbing;
+    }
+    #preview {
+        image-rendering: -webkit-optimize-contrast; /* For Chrome/Safari */
+        image-rendering: crisp-edges; /* For Firefox */
+        image-rendering: pixelated; /* Fallback */
+        transform: translateZ(0); /* Force hardware acceleration */
+        will-change: transform; /* Optimize rendering */
     }
 `;
 document.head.appendChild(styleSheet);
