@@ -7,12 +7,22 @@ const preview = document.getElementById('preview');
 const formatSelector = document.getElementById('formatSelector');
 const copyButton = document.getElementById('copyButton');
 const downloadButton = document.getElementById('downloadButton');
+const fontSearch = document.getElementById('fontSearch');
+const fontSuggestions = document.getElementById('fontSuggestions');
 
 let fonts = [];
+let filteredFonts = [];
 let activeFont = '';
 let showingAllFonts = false;
 let selectedUnicodeStyle = 'bold';
 const visibleItems = 20;
+
+// Fallback list of popular Google Fonts (in case API fails)
+const fallbackFonts = [
+    'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins', 'Raleway', 'Oswald', 'Merriweather',
+    'Ubuntu', 'Playfair Display', 'Nunito', 'Fira Sans', 'Dosis', 'Quicksand', 'Lobster', 'Pacifico',
+    'Arimo', 'Hind', 'Karla', 'Bitter', 'Inconsolata', 'Cabin', 'Anton', 'Source Sans Pro'
+];
 
 // Unicode styles for fancy text copying
 const unicodeStyles = {
@@ -117,50 +127,41 @@ async function loadGoogleFonts() {
 
         if (data.items && data.items.length > 0) {
             fonts = data.items.map(item => item.family);
-            renderFontList(0);
-            activeFont = fonts[0];
-            updatePreview();
-            updateActiveFontItem();
-
-            const initialFontLink = document.createElement('link');
-            initialFontLink.href = `https://fonts.googleapis.com/css?family=${encodeURIComponent(activeFont)}`;
-            initialFontLink.rel = 'stylesheet';
-            document.head.appendChild(initialFontLink);
         } else {
             throw new Error('No fonts found in API response');
         }
     } catch (err) {
-        console.error('Error loading fonts:', err);
-        fontList.innerHTML = '<div class="font-item" data-font="Arial">Arial (Fallback)</div>';
-        activeFont = 'Arial';
-        updatePreview();
-        updateActiveFontItem();
+        console.error('Error loading fonts from API:', err);
+        fonts = [...fallbackFonts];
     }
+
+    // Initialize filteredFonts and render the font list
+    filteredFonts = [...fonts];
+    renderFontList(0);
+    activeFont = fonts[0];
+    updatePreview();
+    updateActiveFontItem();
+
+    // Load the initial font
+    const initialFontLink = document.createElement('link');
+    initialFontLink.href = `https://fonts.googleapis.com/css?family=${encodeURIComponent(activeFont)}`;
+    initialFontLink.rel = 'stylesheet';
+    document.head.appendChild(initialFontLink);
 }
 
 function renderFontList(startIndex) {
     fontList.innerHTML = '';
-    if (showingAllFonts) {
-        fonts.forEach(font => {
-            const div = document.createElement('div');
-            div.className = 'font-item';
-            div.textContent = font;
-            div.dataset.font = font;
-            div.style.fontFamily = font;
-            fontList.appendChild(div);
-        });
-    } else {
-        const endIndex = Math.min(startIndex + visibleItems, fonts.length);
-        for (let i = startIndex; i < endIndex; i++) {
-            const font = fonts[i];
-            const div = document.createElement('div');
-            div.className = 'font-item';
-            div.textContent = font;
-            div.dataset.font = font;
-            div.style.fontFamily = font;
-            fontList.appendChild(div);
-        }
-    }
+    const fontsToRender = showingAllFonts ? filteredFonts : filteredFonts.slice(startIndex, startIndex + visibleItems);
+    
+    fontsToRender.forEach(font => {
+        const div = document.createElement('div');
+        div.className = 'font-item';
+        div.textContent = font;
+        div.dataset.font = font;
+        div.style.fontFamily = font;
+        fontList.appendChild(div);
+    });
+
     updateActiveFontItem();
 }
 
@@ -182,7 +183,60 @@ function updateActiveFontItem() {
     });
 }
 
-// Event Listeners
+// Font Search and Suggestions Functionality
+fontSearch.addEventListener('input', () => {
+    const searchTerm = fontSearch.value.trim().toLowerCase();
+    filteredFonts = fonts.filter(font => font.toLowerCase().includes(searchTerm));
+    renderFontList(0);
+
+    // Show search suggestions (limit to 5 suggestions)
+    fontSuggestions.innerHTML = '';
+    if (searchTerm) {
+        const suggestions = fonts
+            .filter(font => font.toLowerCase().includes(searchTerm))
+            .slice(0, 5); // Limit to 5 suggestions
+        suggestions.forEach(font => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.textContent = font;
+            div.addEventListener('click', () => {
+                fontSearch.value = font;
+                filteredFonts = fonts.filter(f => f.toLowerCase().includes(font.toLowerCase()));
+                renderFontList(0);
+                fontSuggestions.classList.remove('active');
+                activeFont = font;
+                const fontLink = document.createElement('link');
+                fontLink.href = `https://fonts.googleapis.com/css?family=${encodeURIComponent(activeFont)}`;
+                fontLink.rel = 'stylesheet';
+                document.head.appendChild(fontLink);
+                updatePreview();
+                updateActiveFontItem();
+            });
+            fontSuggestions.appendChild(div);
+        });
+        fontSuggestions.classList.add('active');
+    } else {
+        fontSuggestions.classList.remove('active');
+    }
+
+    if (filteredFonts.length > 0 && !filteredFonts.includes(activeFont)) {
+        activeFont = filteredFonts[0];
+        const fontLink = document.createElement('link');
+        fontLink.href = `https://fonts.googleapis.com/css?family=${encodeURIComponent(activeFont)}`;
+        fontLink.rel = 'stylesheet';
+        document.head.appendChild(fontLink);
+        updatePreview();
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!fontSearch.contains(e.target) && !fontSuggestions.contains(e.target)) {
+        fontSuggestions.classList.remove('active');
+    }
+});
+
+// Event Listeners for Font List
 fontList.addEventListener('scroll', () => {
     if (!showingAllFonts) {
         const scrollTop = fontList.scrollTop;
@@ -194,8 +248,8 @@ fontList.addEventListener('scroll', () => {
         renderFontList(startIndex);
 
         const newIndex = startIndex + Math.floor(visibleItems / 2);
-        if (newIndex >= 0 && newIndex < fonts.length) {
-            const newFont = fonts[newIndex];
+        if (newIndex >= 0 && newIndex < filteredFonts.length) {
+            const newFont = filteredFonts[newIndex];
             if (newFont !== activeFont) {
                 activeFont = newFont;
                 const fontLink = document.createElement('link');
